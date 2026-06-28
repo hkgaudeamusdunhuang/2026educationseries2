@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敦煌時空修復 - 互動教學系統</title>
+    <style>
+        :root {
+            --theme-bg: #f2ebd9;       
+            --theme-dark: #3a2e2b;     
+            --theme-accent: #c05640;   
+            --theme-blue: #3b7a7a;     
+            --theme-green: #597d57;    
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; }
+
+        body {
+            background-color: var(--theme-bg);
+            color: var(--theme-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 開始頁面樣式 --- */
+        #start-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('4.png'); 
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            color: var(--white);
+            text-align: center;
+        }
+
+        #start-screen h1 {
+            font-size: 80px;
+            letter-spacing: 15px;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+        }
+
+        #start-screen p {
+            font-size: 24px;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+        }
+
+        .start-btn {
+            background-color: var(--theme-accent);
+            color: var(--white);
+            border: none;
+            padding: 20px 60px;
+            font-size: 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+
+        .start-btn:hover {
+            transform: scale(1.1);
+            background-color: #e67e22;
+        }
+
+        /* --- 遊戲主介面 --- */
+        header {
+            background-color: var(--theme-dark);
+            color: var(--theme-bg);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-container { display: flex; gap: 15px; }
+
+        .step-dot {
+            width: 35px; height: 35px; border-radius: 50%;
+            background-color: rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: rgba(255,255,255,0.5);
+        }
+
+        .step-dot.active { background-color: var(--theme-accent); color: var(--white); box-shadow: 0 0 10px var(--theme-accent); }
+        .step-dot.completed { background-color: var(--theme-blue); color: var(--white); }
+
+        main { flex: 1; display: flex; padding: 30px; gap: 30px; max-width: 1600px; margin: 0 auto; width: 100%; }
+
+        .visual-panel {
+            flex: 1.2; background-color: var(--white); border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06); border: 2px solid #e3dac9;
+            overflow: hidden; display: flex; flex-direction: column; position: relative;
+        }
+
+        .media-container { flex: 1; display: flex; align-items: center; justify-content: center; background-color: #1a1514; position: relative; }
+        .media-container img, .media-container video { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .hint-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: var(--white);
+            padding: 15px 20px; font-size: 18px; text-align: center; transform: translateY(100%); transition: transform 0.3s;
+        }
+        .hint-overlay.show { transform: translateY(0); }
+
+        .control-panel { flex: 0.8; display: flex; flex-direction: column; gap: 20px; }
+        .narration-box { background-color: #ebdcb9; border-left: 6px solid var(--theme-accent); padding: 20px; border-radius: 4px; font-size: 18px; line-height: 1.6; }
+        .narration-box strong { color: var(--theme-accent); display: block; margin-bottom: 5px; font-size: 16px; }
+
+        .question-box { background: var(--white); padding: 25px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); flex: 1; display: flex; flex-direction: column; }
+        .question-text { font-size: 22px; font-weight: bold; margin-bottom: 25px; }
+
+        .options-list { display: flex; flex-direction: column; gap: 15px; }
+        .option-btn { background-color: #f7f4eb; border: 2px solid #e3dac9; padding: 18px 25px; border-radius: 8px; font-size: 18px; text-align: left; cursor: pointer; transition: all 0.2s; }
+        .option-btn:hover { background-color: var(--theme-bg); border-color: var(--theme-accent); }
+        .option-prefix { font-weight: bold; color: var(--theme-accent); margin-right: 15px; font-size: 20px; }
+
+        /* --- 排序題樣式 --- */
+        .sort-container { display: flex; gap: 12px; margin-bottom: 25px; justify-content: center; }
+        .sort-item { width: 100px; height: 100px; border: 2px dashed #c8bfa9; background: #fdfcf7; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; }
+        .sort-item img { max-width: 60px; max-height: 60px; object-fit: contain; }
+        .sort-item span { font-size: 11px; margin-top: 4px; color: #666; }
+
+        .sort-slots { display: flex; gap: 12px; justify-content: center; margin-top: 15px; }
+        .slot { width: 100px; height: 120px; border: 2px solid var(--theme-blue); background: rgba(59, 122, 122, 0.05); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .slot-num { position: absolute; top: 5px; left: 5px; font-size: 12px; opacity: 0.5; }
+
+        /* --- 最後一頁專屬按鈕 --- */
+        .ending-actions { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
+        .action-btn { padding: 20px; font-size: 22px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .btn-restart { background-color: var(--theme-blue); color: var(--white); }
+        .btn-exit { background-color: var(--theme-dark); color: var(--white); }
+        .action-btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+        /* 彈窗樣式 */
+        .overlay-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1000; }
+        .overlay-modal.show { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--white); padding: 40px; border-radius: 16px; text-align: center; max-width: 500px; width: 90%; border-top: 8px solid var(--theme-accent); }
+        .modal-btn { background-color: var(--theme-dark); color: var(--white); border: none; padding: 12px 35px; font-size: 16px; border-radius: 6px; cursor: pointer; }
+
+        .hidden { display: none !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+        .shake { animation: shake 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>敦煌時空修復局</h1>
+        <p>—— 守護千年壁畫，重現大唐風華 ——</p>
+        <button class="start-btn" onclick="startGame()">進入洞窟開始修復</button>
+    </div>
+
+    <header>
+        <h1>🎮 敦煌時空修復局</h1>
+        <div class="progress-container">
+            <div class="step-dot active" id="dot-1">1</div>
+            <div class="step-dot" id="dot-2">2</div>
+            <div class="step-dot" id="dot-3">3</div>
+            <div class="step-dot" id="dot-4">4</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="visual-panel" id="visualPanel">
+            <div class="media-container" id="mediaContainer">
+                <img id="gameImage" src="1.png" alt="展示畫面">
+                <video id="gameVideo" class="hidden" controls preload="auto"></video>
+            </div>
+            <div class="hint-overlay" id="hintOverlay"></div>
+        </div>
+
+        <div class="control-panel">
+            <div class="narration-box">
+                <strong id="narratorTitle">導言</strong>
+                <p id="narrationText"></p>
+            </div>
+
+            <div class="question-box">
+                <div class="question-text" id="questionText"></div>
+                
+                <div id="optionsContainer" class="options-list"></div>
+
+                <div id="sortContainer" class="hidden">
+                    <p style="margin-bottom:15px; font-weight:bold; color:var(--theme-blue);">點選工具進行排序：</p>
+                    <div class="sort-container" id="sortItemsPool"></div>
+                    <div class="sort-slots" id="sortSlotsContainer">
+                        <div class="slot"><span class="slot-num">1</span><div class="slot-content"></div></div>
+                        <div class="slot"><span class="slot-num">2</span><div class="slot-content"></div></div>
+                        <div class="slot"><span class="slot-num">3</span><div class="slot-content"></div></div>
+                        <div class="slot"><span class="slot-num">4</span><div class="slot-content"></div></div>
+                    </div>
+                    <button class="modal-btn" id="submitSortBtn" style="margin-top:20px; width:100%;">確認修復順序</button>
+                </div>
+
+                <div id="endingContainer" class="ending-actions hidden">
+                    <button class="action-btn btn-restart" onclick="restartGame()">🔄 重新開始挑戰</button>
+                    <button class="action-btn btn-exit" onclick="exitToStart()">🚪 離開遊戲</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="overlay-modal" id="feedbackModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">回應</div>
+            <div class="modal-text" id="modalText"></div>
+            <button class="modal-btn" id="modalActionBtn">繼續</button>
+        </div>
+    </div>
+
+    <script>
+        // 已針對你 GitHub 上實際的檔案大小寫和格式進行完美校對
+        const gameData = [
+            {
+                id: 1,
+                type: "choice",
+                narrator: "敦煌莫高窟開鑿在由大泉河自然衝刷形成的鳴沙山斷崖上，地質上屬於酒泉系礫岩層。這種地層粗糙酥鬆，岩壁不平整，是不能直接在上面繪制壁畫的，要先在開鑿好的洞窟牆面上製作多層材料不同的泥層，俗稱“地仗層”。",
+                question: "各位實習修復師，請問古人的智慧是怎麼排序這三個步驟的？",
+                image: "1.png", 
+                video: "1.mp4", 
+                options: [
+                    { prefix: "A", text: "先刷白粉，再鋪細泥，最後上草泥", isCorrect: false },
+                    { prefix: "B", text: "先鋪草泥，再上細泥，最後刷白粉", isCorrect: true },
+                    { prefix: "C", text: "直接在石頭上刷白粉", isCorrect: false }
+                ],
+                hint: "回答錯誤。提示：由粗至細。"
+            },
+            {
+                id: 2,
+                type: "choice",
+                narrator: "很多壁畫都是由畫匠師傅帶領徒弟們一起創作完成的。師傅起樣定稿後，會用符號把要塗的顏色標注在牆壁上。這些符號被稱為“布色符號”，是敦煌壁畫中特有的標色方法。",
+                question: "天哪！師傅畫好了草稿，但還沒上色就出門了！但他留下了神祕的密碼。請問圖中標示“主”的葉子，我們應該幫它塗上什麼顏色？",
+                image: "3.PNG", // 💡 已校對：根據你 GitHub 截圖，此檔案為大寫的 .PNG
+                video: "2.mp4", 
+                options: [
+                    { prefix: "A", text: "紅色", isCorrect: false },
+                    { prefix: "B", text: "黃色", isCorrect: false },
+                    { prefix: "C", text: "青色", isCorrect: true }
+                ],
+                hint: "不對喔！仔細看看對照表，“主”字代表的是大自然的青翠顏色。"
+            },
+            {
+                id: 3,
+                type: "sort",
+                narrator: "時間久了，鉛丹顏料受到陽光及氧化後逐漸變成褐色或黑色，導致失去了昔日的光澤，這也是現代科學修復壁畫的其中的考驗。不好了！壁畫因為潮濕乾裂，快要掉下來了！",
+                question: "我們現在要扮演現代修復師，請大家合力找出正確的四個修復步驟順序！",
+                image: "5.png", 
+                correctOrder: ["7.png", "9.jpg", "8.png", "6.png"], // 💡 已校對：注射器為 9.jpg（或者是 9.JPG，代碼內會自動做大小寫相容處理）
+                toolNames: { "7.png": "洗耳球", "9.jpg": "注射器", "8.png": "滾浪", "6.png": "隔膠加壓" },
+                hint: "哎呀！順序錯了！裡面還有沙子，直接壓會把壁畫刮傷喔！再想一想第一步是什麼？"
+            },
+            {
+                id: 4,
+                type: "ending",
+                narrator: "修復成功！",
+                question: "🏆 恭喜獲得「首席守護者」勳章！",
+                image: "4.png", 
+                options: []
+            }
+        ];
+
+        let currentStageIndex = 0;
+        let selectedToolsOrder = [];
+
+        const narrationText = document.getElementById('narrationText');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const sortContainer = document.getElementById('sortContainer');
+        const endingContainer = document.getElementById('endingContainer');
+        const gameImage = document.getElementById('gameImage');
+        const gameVideo = document.getElementById('gameVideo');
+        const hintOverlay = document.getElementById('hintOverlay');
+        const feedbackModal = document.getElementById('feedbackModal');
+        const visualPanel = document.getElementById('visualPanel');
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            loadStage(0);
+        }
+
+        function loadStage(index) {
+            currentStageIndex = index;
+            document.querySelectorAll('.step-dot').forEach((dot, dIdx) => {
+                dot.className = 'step-dot';
+                if (dIdx < index) dot.classList.add('completed');
+                if (dIdx === index) dot.classList.add('active');
+            });
+
+            const stage = gameData[index];
+            gameImage.classList.remove('hidden');
+            gameVideo.classList.add('hidden');
+            gameVideo.pause();
+            
+            // 💡 自動容錯：處理 GitHub Pages 上可能出現的大寫字尾問題
+            preloadImageWithFallback(gameImage, stage.image);
+
+            narrationText.innerText = stage.narrator;
+            questionText.innerText = (stage.type !== "ending") ? `【第 ${stage.id} 關】${stage.question}` : stage.question;
+            hintOverlay.classList.remove('show');
+
+            optionsContainer.classList.add('hidden');
+            sortContainer.classList.add('hidden');
+            endingContainer.classList.add('hidden');
+
+            if (stage.type === "choice") {
+                optionsContainer.classList.remove('hidden');
+                renderChoices(stage.options);
+            } else if (stage.type === "sort") {
+                sortContainer.classList.remove('hidden');
+                initSortGame(stage);
+            } else if (stage.type === "ending") {
+                endingContainer.classList.remove('hidden');
+                narrationText.innerHTML = "<strong>修復成功！</strong><br>恭喜各位實習修復師！成功守護敦煌文化瑰寶！";
+            }
+        }
+
+        // 💡 容錯函數：如果小寫副檔名讀取不到，自動嘗試大寫副檔名，確保 GitHub 100% 顯示
+        function preloadImageWithFallback(imgElement, src) {
+            imgElement.src = src;
+            imgElement.onerror = function() {
+                if (src.endsWith('.png')) {
+                    imgElement.src = src.replace('.png', '.PNG');
+                } else if (src.endsWith('.jpg')) {
+                    imgElement.src = src.replace('.jpg', '.JPG');
+                }
+                imgElement.onerror = null; // 避免無限迴圈
+            };
+        }
+
+        function renderChoices(options) {
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span class="option-prefix">${opt.prefix}</span> ${opt.text}`;
+                btn.onclick = () => {
+                    if(opt.isCorrect) {
+                        showModal("🎉 回答正確！", "太棒了！全班合力完成了這項修復考驗，讓我們來看看成果！", () => {
+                            if (gameData[currentStageIndex].video) playVideoAnimation(gameData[currentStageIndex].video);
+                            else nextStage();
+                        });
+                    } else triggerWrongFeedback(gameData[currentStageIndex].hint);
+                };
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function playVideoAnimation(videoSrc) {
+            gameImage.classList.add('hidden');
+            gameVideo.classList.remove('hidden');
+            gameVideo.src = videoSrc;
+            gameVideo.muted = false; 
+            gameVideo.volume = 1.0; 
+            gameVideo.play().catch(e => {
+                hintOverlay.innerText = "🔊 點擊影片畫面即可開啟聲音";
+                hintOverlay.classList.add('show');
+            });
+            gameVideo.onended = () => showModal("✨ 動態復原完成！", "古人的智慧被完美重現。下一關挑戰開始！", nextStage);
+        }
+
+        function initSortGame(stage) {
+            selectedToolsOrder = [];
+            updateSortSlots();
+            const sortItemsPool = document.getElementById('sortItemsPool');
+            sortItemsPool.innerHTML = '';
+            
+            // 💡 這裡對齊你上傳的工具檔名
+            const tools = ["6.png", "7.png", "8.png", "9.jpg"]; 
+            
+            tools.forEach(toolImg => {
+                const item = document.createElement('div');
+                item.className = 'sort-item';
+                
+                // 創建圖片元素並加上 GitHub 大小寫容錯
+                const imgEl = document.createElement('img');
+                preloadImageWithFallback(imgEl, toolImg);
+                
+                const spanEl = document.createElement('span');
+                spanEl.innerText = stage.toolNames[toolImg];
+                
+                item.appendChild(imgEl);
+                item.appendChild(spanEl);
+                
+                item.onclick = () => {
+                    if (selectedToolsOrder.includes(toolImg)) selectedToolsOrder = selectedToolsOrder.filter(t => t !== toolImg);
+                    else if (selectedToolsOrder.length < 4) selectedToolsOrder.push(toolImg);
+                    updateSortSlots();
+                };
+                sortItemsPool.appendChild(item);
+            });
+            
+            document.getElementById('submitSortBtn').onclick = () => {
+                if (selectedToolsOrder.length < 4) return alert("請選滿 4 個修復工具！");
+                if (selectedToolsOrder.every((val, i) => val === stage.correctOrder[i])) {
+                    showModal("🏆 終極修復成功！", "完美地完成了現代科學修復步驟！", nextStage);
+                } else triggerWrongFeedback(stage.hint);
+            };
+        }
+
+        function updateSortSlots() {
+            const stage = gameData[currentStageIndex];
+            const slots = document.querySelectorAll('.slot-content');
+            slots.forEach((slot, idx) => {
+                if (selectedToolsOrder[idx]) {
+                    const imgName = selectedToolsOrder[idx];
+                    const slotImg = document.createElement('img');
+                    slotImg.style.maxWidth = "50px";
+                    preloadImageWithFallback(slotImg, imgName);
+                    
+                    slot.innerHTML = "";
+                    slot.appendChild(slotImg);
+                    slot.innerHTML += `<br><span style="font-size:11px;">${stage.toolNames[imgName]}</span>`;
+                } else slot.innerHTML = "<span style='color:#ccc; font-size:14px;'>待選</span>";
+            });
+        }
+
+        function nextStage() { loadStage(currentStageIndex + 1); }
+        function restartGame() { loadStage(0); }
+        function exitToStart() { document.getElementById('start-screen').classList.remove('hidden'); }
+
+        function triggerWrongFeedback(msg) {
+            visualPanel.classList.add('shake');
+            setTimeout(() => visualPanel.classList.remove('shake'), 400);
+            hintOverlay.innerText = msg;
+            hintOverlay.classList.add('show');
+        }
+
+        function showModal(title, text, callback) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            feedbackModal.classList.add('show');
+            document.getElementById('modalActionBtn').onclick = () => {
+                feedbackModal.classList.remove('show');
+                if (callback) callback();
+            };
+        }
+    </script>
+</body>
+</html>
